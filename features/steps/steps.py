@@ -5,10 +5,12 @@ from main import ToDoListManager
 def step_given_todo_list_is_empty(context):
     context.manager = ToDoListManager()
 
+@given('the user adds a task "{description}"')
 @when('the user adds a task "{description}"')
 def step_when_user_adds_task(context, description):
     context.manager.add_task(description)
 
+@given('the user lists all tasks')
 @when('the user lists all tasks')
 def step_when_user_lists_all_tasks(context):
     context.tasks = context.manager.tasks
@@ -43,3 +45,15 @@ def step_when_user_sets_category(context, category, task_id):
 @then('the task with ID {task_id:d} should have the category "{category}"')
 def step_then_task_should_have_category(context, task_id, category):
     task = next((task for task in context.manager.tasks if task.task_id == task_id), None)
+    assert task is not None, f'Task with ID {task_id} not found'
+    assert task.category == category, f'Task with ID {task_id} does not have the category "{category}"'
+
+@then('an error message "Task with ID {task_id:d} not found." should be shown')
+def step_then_error_message_should_be_shown(context, task_id):
+    import sys
+    from io import StringIO
+    output = StringIO()
+    sys.stdout = output
+    context.manager.mark_task_as_completed(task_id)
+    sys.stdout = sys.__stdout__
+    assert f'Task with ID {task_id} not found.' in output.getvalue()
